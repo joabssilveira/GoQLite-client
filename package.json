@@ -38,9 +38,9 @@
 		"build": "tsc --project tsconfig.cjs.json && tsc --project tsconfig.esm.json",
 		"prepare": "husky",
 		"release": "standard-version",
-		"publish": "git push --follow-tags origin main"
+		"publish": "git push --follow-tags origin main && npm publish"
 	},
-	"version": "0.1.1",
+	"version": "0.1.0",
 	"exports": {
 		".": {
 			"require": "./dist/cjs/index.js",
