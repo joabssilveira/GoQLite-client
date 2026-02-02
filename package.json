@@ -1,0 +1,50 @@
+{
+	"author": "joabssilveira",
+	"devDependencies": {
+		"@commitlint/cli": "^20.4.1",
+		"@commitlint/config-conventional": "^20.4.1",
+		"husky": "^9.1.7",
+		"standard-version": "^9.5.0",
+		"typescript": "^5.6.3"
+	},
+	"engines": {
+		"node": ">=10"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"homepage": "https://github.com/joabssilveira/GoQLite-client",
+	"keywords": [
+		"database",
+		"db",
+		"mongoose",
+		"sequelize",
+		"redis",
+		"extension"
+	],
+	"license": "MIT",
+	"main": "dist/cjs/index.js",
+	"module": "dist/esm/index.js",
+	"types": "dist/types/index.d.ts",
+	"name": "goqlite-client",
+	"prettier": {
+		"printWidth": 80,
+		"semi": true,
+		"singleQuote": true,
+		"trailingComma": "es5"
+	},
+	"scripts": {
+		"build": "tsc --project tsconfig.cjs.json && tsc --project tsconfig.esm.json",
+		"prepare": "husky",
+		"release": "standard-version",
+		"publish": "git push --follow-tags origin main"
+	},
+	"version": "0.1.0",
+	"exports": {
+		".": {
+			"require": "./dist/cjs/index.js",
+			"import": "./dist/esm/index.js"
+		}
+	}
+}
