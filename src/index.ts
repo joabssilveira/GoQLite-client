@@ -2,6 +2,11 @@
  * WHERE
  */
 
+export type ComparisonOperatorsOp<T> = {
+  op: string
+  value: T
+}
+
 export type ComparisonOperators<T> = {
   $eq?: T;
   $ne?: T;
@@ -22,6 +27,8 @@ export type ComparisonOperators<T> = {
 
   $exists?: boolean;
   $null?: boolean;
+
+  $op?: ComparisonOperatorsOp<T>
 };
 
 export type FieldCondition<T> =
