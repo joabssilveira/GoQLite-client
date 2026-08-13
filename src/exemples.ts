@@ -2,7 +2,7 @@
  * example
  */
 
-import { ApiClientParams, ApiGetResponse, buildQueryParams, Nested, Where } from ".";
+import { GQLGetRequestParams, GQLGetResponse, buildQueryParams, Nested, GQLWhere } from ".";
 
 interface MyMaster {
   id: number;
@@ -30,63 +30,63 @@ interface MyChildLevel2 {
  * WHERE
  */
 
-export const filterEq: Where<MyMaster> = {
+export const filterEq: GQLWhere<MyMaster> = {
   somefield: {
     $eq: 'some value'
   }
 }
 
-export const filterEqSimplified: Where<MyMaster> = {
+export const filterEqSimplified: GQLWhere<MyMaster> = {
   somefield: 'some value'
 }
 
-export const filterNe: Where<MyMaster> = {
+export const filterNe: GQLWhere<MyMaster> = {
   somefield: {
     $ne: 'some value'
   }
 }
 
-export const filterGt: Where<MyMaster> = {
+export const filterGt: GQLWhere<MyMaster> = {
   id: {
     $gt: 10
     // its the same way for lt
   }
 }
 
-export const filterGte: Where<MyMaster> = {
+export const filterGte: GQLWhere<MyMaster> = {
   id: {
     $gte: 10
     // its the same way for lte
   }
 }
 
-export const filterIn: Where<MyMaster> = {
+export const filterIn: GQLWhere<MyMaster> = {
   id: {
     $in: [1, 10]
     // its the same way for nin
   }
 }
 
-export const filterLike: Where<MyMaster> = {
+export const filterLike: GQLWhere<MyMaster> = {
   somefield: {
     $like: 'some value'
     // its the same way for ilike
   }
 }
 
-export const filterExists: Where<MyMaster> = {
+export const filterExists: GQLWhere<MyMaster> = {
   id: {
     $exists: true
   }
 }
 
-export const filterIsNotNull: Where<MyMaster> = {
+export const filterIsNotNull: GQLWhere<MyMaster> = {
   somefield: {
     $null: false
   }
 }
 
-export const filterAnd: Where<MyMaster> = {
+export const filterAnd: GQLWhere<MyMaster> = {
   $and: [{
     id: 10
   }, {
@@ -94,7 +94,7 @@ export const filterAnd: Where<MyMaster> = {
   }]
 }
 
-export const filterAndII: Where<MyMaster> = {
+export const filterAndII: GQLWhere<MyMaster> = {
   $and: [{
     id: {
       $eq: 10
@@ -106,12 +106,12 @@ export const filterAndII: Where<MyMaster> = {
   }]
 }
 
-export const filterAndSimplified: Where<MyMaster> = {
+export const filterAndSimplified: GQLWhere<MyMaster> = {
   id: 10,
   somefield: 'some value'
 }
 
-export const filterAndIII: Where<MyMaster> = {
+export const filterAndIII: GQLWhere<MyMaster> = {
   id: {
     $eq: 10
   },
@@ -120,7 +120,7 @@ export const filterAndIII: Where<MyMaster> = {
   }
 }
 
-export const filterOr: Where<MyMaster> = {
+export const filterOr: GQLWhere<MyMaster> = {
   $or: [{
     id: 10
   }, {
@@ -128,26 +128,26 @@ export const filterOr: Where<MyMaster> = {
   }]
 }
 
-export const filterNot: Where<MyMaster> = {
+export const filterNot: GQLWhere<MyMaster> = {
   $not: {
     id: 10
   }
 }
 
-export const filterByChildren: Where<MyMaster> = {
+export const filterByChildren: GQLWhere<MyMaster> = {
   // There's no Intellisense here.
-  'myChildren.somefield': {
-    // There's no Intellisense here.
-    $eq: 'some value'
-  }
+  // 'myChildren.somefield': {
+  //   // There's no Intellisense here.
+  //   $eq: 'some value'
+  // }
 }
 
-export const filterByChildrenLevelN: Where<MyMaster> = {
+export const filterByChildrenLevelN: GQLWhere<MyMaster> = {
   // There's no Intellisense here.
-  'myChildren.myChildrenLevel2.somefield': {
-    // There's no Intellisense here.
-    $eq: 'some value'
-  }
+  // 'myChildren.myChildrenLevel2.somefield': {
+  //   // There's no Intellisense here.
+  //   $eq: 'some value'
+  // }
 }
 
 /**
@@ -218,7 +218,7 @@ export const nestedMyChildLevel2: Nested<MyChildLevel2> = {
  */
 
 (async function main() {
-  const paramsObj: ApiClientParams<MyMaster> = {
+  const paramsObj: GQLGetRequestParams<MyMaster> = {
     where: {
       somefield: {
         $ilike: 'some value'
@@ -242,7 +242,7 @@ export const nestedMyChildLevel2: Nested<MyChildLevel2> = {
     throw new Error(`HTTP ${response.status}`);
   }
 
-  const data: ApiGetResponse<MyMaster> = await response.json();
+  const data: GQLGetResponse<MyMaster> = await response.json();
 
   console.log(data.payload);
   console.log(data.pagination);

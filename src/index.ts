@@ -1,13 +1,31 @@
+// import { NestedKeys } from 'fwork-jsts-common'
+
+export type NestedKeys<
+  T,
+  MaxDepth extends number = 3,
+  CurrentDepth extends number[] = []
+> = CurrentDepth['length'] extends MaxDepth
+  ? never
+  : {
+    [K in keyof T & (string | number)]: NonNullable<T[K]> extends Date | Array<any> | Function
+    ? `${K}`
+    : NonNullable<T[K]> extends object
+    ? `${K}` | `${K}.${NestedKeys<NonNullable<T[K]>, MaxDepth, [...CurrentDepth, 1]>}`
+    : `${K}`;
+  }[keyof T & (string | number)];
+
 /**
  * WHERE
  */
 
-export type ComparisonOperatorsOp<T> = {
+// FieldExprOp on goqlite lib
+export type GQLComparisonOperatorsOp<T> = {
   op: string
   value: T
 }
 
-export type ComparisonOperators<T> = {
+// FieldExpr on goqlite lib
+export type GQLComparisonOperators<T> = {
   $eq?: T;
   $ne?: T;
 
@@ -28,23 +46,42 @@ export type ComparisonOperators<T> = {
   $exists?: boolean;
   $null?: boolean;
 
-  $op?: ComparisonOperatorsOp<T>
+  $op?: GQLComparisonOperatorsOp<T>
 };
 
-export type FieldCondition<T> =
+export type GQLFieldCondition<T> =
   | T
-  | ComparisonOperators<T>;
+  | GQLComparisonOperators<T>;
 
-export type LogicalOperators<T> = {
-  $and?: Where<T>[];
-  $or?: Where<T>[];
-  $not?: Where<T>;
-  [key: string]: any;
+export type GQLLogicalOperators<T, MaxDepth extends number = 3> = {
+  $and?: GQLWhere<T, MaxDepth>[];
+  $or?: GQLWhere<T, MaxDepth>[];
+  $not?: GQLWhere<T, MaxDepth>;
+
+  // isso aqui era usando antes do NestedKeys ser implementado no Where
+  // antes, pra aceitar chaves aninhadas precisavamos permitir valores any, ja que o Where era limitado ao primeiro nivel
+  // agora nao é mais necessario
+  // [key: string]: any;
+
+  // Aceita chaves dinâmicas que começam com $, mas bloqueia propriedades comuns desconhecidas como 'uuid'
+  // caso precise habilitar algo nesse sentido no futuro
+  [key: `$${string}`]: any;
 };
 
-export type Where<T> = {
-  [P in keyof T]?: FieldCondition<T[P]>;
-} & LogicalOperators<T>;
+export type GetPropertyType<T, Path extends string> = Path extends `${infer Parent}.${infer Child}`
+  ? Parent extends keyof T
+  ? GetPropertyType<NonNullable<T[Parent]>, Child>
+  : never
+  : Path extends keyof T
+  ? T[Path]
+  : never;
+
+// export type Where<T> = {
+//   [P in keyof T]?: FieldCondition<T[P]>;
+// } & LogicalOperators<T>;
+export type GQLWhere<T, MaxDepth extends number = 3> = {
+  [K in NestedKeys<T, MaxDepth>]?: GQLFieldCondition<GetPropertyType<T, K>>;
+} & GQLLogicalOperators<T, MaxDepth>;
 
 /**
  * NESTED
@@ -62,8 +99,8 @@ type RelationKeys<T> = {
   [K in keyof T]: IsRelation<T[K]> extends true ? K : never
 }[keyof T];
 
-export type NestedQuery<T> = {
-  where?: Where<T>;
+export type GQLNestedQuery<T, MaxDepth extends number = 3> = {
+  where?: GQLWhere<T, MaxDepth>;
   sort?: Partial<Record<keyof T, "asc" | "desc">>;
   select?: (keyof T)[];
   limit?: number;
@@ -71,32 +108,26 @@ export type NestedQuery<T> = {
   page?: number;
 };
 
-export type NestedNode<T> = {
-  [K in RelationKeys<T>]?: true | NestedConfig<T[K]>;
+export type GQLNestedNode<T> = {
+  [K in RelationKeys<T>]?: true | GQLNestedConfig<T[K]>;
 };
 
-export type NestedConfig<T> = T extends (infer U)[]
+export type GQLNestedConfig<T> = T extends (infer U)[]
   ? {
-    query?: NestedQuery<U>;
-    nested?: NestedNode<U>;
+    query?: GQLNestedQuery<U>;
+    nested?: GQLNestedNode<U>;
   }
   : {
-    query?: NestedQuery<T>;
-    nested?: NestedNode<T>;
+    query?: GQLNestedQuery<T>;
+    nested?: GQLNestedNode<T>;
   };
 
 
-export type Nested<T> = NestedNode<T>;
+export type Nested<T> = GQLNestedNode<T>;
 
 ///////////////////////////////////////////////////////////////////////////
 
-export function buildNestedString<T>(nested: Nested<T>): string {
-  return Object.entries(nested)
-    .map(([key, value]) => serializeNode(key, value as any))
-    .join(",");
-}
-
-function serializeNode(name: string, config: true | NestedConfig<any>): string {
+function serializeNode(name: string, config: true | GQLNestedConfig<any>): string {
   const nodeName = name; // mantém no padrão do model (courses_def, CoursesDef, etc)
 
   if (config === true) {
@@ -128,20 +159,14 @@ function serializeNode(name: string, config: true | NestedConfig<any>): string {
   return `${nodeName}{${parts.join(",")}}`;
 }
 
-///////////////////////////////////////////////////////////////////////////
-
-export type ApiClientParams<T> = {
-  where?: Where<T>;
-  sort?: Partial<Record<keyof T, "asc" | "desc">>;
-  select?: (keyof T)[];
-  nested?: Nested<T>;
-  limit?: number;
-  skip?: number;
-  page?: number,
+export function buildNestedString<T>(nested: Nested<T>): string {
+  return Object.entries(nested)
+    .map(([key, value]) => serializeNode(key, value as any))
+    .join(",");
 }
 
-export function buildQueryParams<T>(params: ApiClientParams<T>) {
-  const query: Record<string, string> = {};
+export function buildQueryParams<T>(params: GQLGetRequestParams<T>) {
+  const query: Record<keyof typeof params, any> = {} as any;
 
   if (params.where) query.where = JSON.stringify(params.where);
   if (params.sort) query.sort = JSON.stringify(params.sort);
@@ -154,12 +179,32 @@ export function buildQueryParams<T>(params: ApiClientParams<T>) {
   return query;
 }
 
+///////////////////////////////////////////////////////////////////////////
+
+/**
+ * HTTP REQUEST
+ */
+
+// QueryPayload on goqlite lib
+export type GQLGetRequestParams<T, MaxDepth extends number = 3> = {
+  where?: GQLWhere<T, MaxDepth>;
+  sort?: Partial<Record<keyof T, "asc" | "desc">>;
+  select?: (keyof T)[];
+  nested?: Nested<T>;
+  limit?: number;
+  skip?: number;
+  page?: number,
+}
+
 /**
  * HTTP RESPONSE
  */
 
-export type ApiGetResponse<T> = {
+// GetListData on goqlite lib
+export type GQLGetResponse<T> = {
   payload?: T[],
+
+  // PaginationMeta on goqlite lib
   pagination?: {
     skip?: number,
     limit?: number,
