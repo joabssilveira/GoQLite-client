@@ -186,6 +186,7 @@ export function buildQueryParams<T>(params: GQLGetRequestParams<T>) {
  */
 
 // QueryPayload on goqlite lib
+// TODO-rename to GQLGetRequestOptions
 export type GQLGetRequestParams<T, MaxDepth extends number = 3> = {
   where?: GQLWhere<T, MaxDepth>;
   sort?: Partial<Record<keyof T, "asc" | "desc">>;
