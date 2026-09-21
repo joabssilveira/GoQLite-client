@@ -165,7 +165,7 @@ export function buildNestedString<T>(nested: Nested<T>): string {
     .join(",");
 }
 
-export function buildQueryParams<T>(params: GQLGetRequestParams<T>) {
+export function buildQueryParams<T, MaxDepth extends number = 3>(params: GQLGetRequestParams<T, MaxDepth>) {
   const query: Record<keyof typeof params, any> = {} as any;
 
   if (params.where) query.where = JSON.stringify(params.where);
